@@ -107,14 +107,20 @@ export const todoOps = {
     // const errorData = await response.json().catch(() => ({ message: '网络错误' }));
     return { success: false, message: message ?? '切换TODO状态失败' };
   },
-  export: async (): Promise<ApiResponse<string>> => {
-    const res = todoOps.getTodos().then(res => {
+  export: async (): Promise<ApiResponse> => {
+    const res = await todoOps.getTodos().then(res => {
       if (res.success) {
         const todos: Todo[] = res.data;
-        return invoke('export_todo', { todo: JSON.stringify(todos), path: 'todo.json' });
+        return invoke('export_todo', { todoStr: JSON.stringify(todos), path: 'todo.json' });
       }
-    })
+    }).catch(err => err)
     console.log(res)
+    if (res) {
+      return { success: true, message: '导出TODO成功' }; // 这里可以根据实际情况返回更多信息
+    }
+    else {
+      return { success: false, message: '导出TODO失败:' + res };
+    }
   }
 
   // /**

@@ -22,9 +22,14 @@ const actions: PageHeaderAction[] = [
   {
     label: '导出',
     icon: 'pi pi-upload',
-    onClick: () => {
+    onClick: async () => {
       // @todo to implement
-      toast.info('Export not implemented yet')
+      const res = await todoOps.export();
+      if (res.success)
+        toast.success('导出成功');
+      else
+        toast.error(res.message ?? '导出失败，未知错误');
+    // toast.info('Export not implemented yet')
     }
   },
   // {
@@ -176,7 +181,7 @@ todoOps.getTodos().then(res => {
   // @todo 确实存在较短时间登录仍然 invalid token 的情况
   if (res.success) {
     let todoOrder = localStorage.getItem('todo-order');
-    if (todoOrder.split(',').filter(o => o).length !== res.data.length) {
+    if (todoOrder && todoOrder.split(',').filter(o => o).length !== res.data.length) {
       localStorage.setItem('todo-orde', '')
       todoOrder = null
     }
