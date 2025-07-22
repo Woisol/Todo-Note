@@ -4,26 +4,69 @@
 		{
 			"type": "npm",
 			"script": "dev",
-			"problemMatcher": [],
 			"label": "npm: dev",
 			"detail": "vite",
-			"isBackground": true
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "custom",
+				"pattern": "$tsc",
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "npm.*dev|npm.*start|npm.*test|npm.*build|npm-run-all|[^\\[]vite|ng serve|ng build|ng test",
+					"endsPattern": "https?://localhost:.*"
+				}
+			},
+			"presentation": {
+				"showReuseMessage": false,
+			}
 		},
+		// 这样启动依然无法调试()
+		// {
+		// 	"label": "npm: dev:all",
+		// 	// "isBackground": true,
+		// 	"dependsOn": [
+		// 		"npm: dev:client",
+		// 		"npm: dev:server"
+		// 	],
+		// 	// "dependsOrder": "parallel"
+		// },
 		{
 			"type": "npm",
 			"script": "dev:server",
-			"problemMatcher": [],
 			"label": "npm: dev:server",
 			"detail": "vite",
-			"isBackground": true
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "custom",
+				"pattern": "$tsc",
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "npm.*dev|npm.*start|npm.*test|npm.*build|npm-run-all|[^\\[]vite|ng serve|ng build|ng test",
+					"endsPattern": "https?://localhost:.*"
+				}
+			},
+			"presentation": {
+				"showReuseMessage": false,
+			}
 		},
 		{
 			"type": "npm",
 			"script": "dev:client",
-			"problemMatcher": [],
 			"label": "npm: dev:client",
 			"detail": "vite",
-			"isBackground": true
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "custom",
+				"pattern": "$tsc",
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "npm.*dev|npm.*start|npm.*test|npm.*build|npm-run-all|[^\\[]vite|ng serve|ng build|ng test",
+					"endsPattern": "https?://localhost:.*"
+				}
+			},
+			"presentation": {
+				"showReuseMessage": false,
+			}
 		}
 	]
 }

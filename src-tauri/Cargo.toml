@@ -1,3 +1,4 @@
+# cargo 也存在移动位置后无法 build 的问题，使用 cargo clean 无效就直接删除 target 吧
 [package]
 name = "todo-note-app"
 version = "0.1.0"

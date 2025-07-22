@@ -5,9 +5,24 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "tauri dev",
+			"request": "launch",
+			"runtimeArgs": [
+				"run",
+				"tauri",
+				"dev"
+			],
+			"runtimeExecutable": "npm",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"type": "node",
+			// "preLaunchTask": "npm: dev"
+		},
+		{
 			"type": "msedge",
 			"request": "launch",
-			"name": "web with server",
+			"name": "web",
 			"url": "http://localhost:1420",
 			"webRoot": "${workspaceFolder}",
 			"preLaunchTask": "npm: dev"
@@ -51,7 +66,7 @@
 				]
 			},
 			// task for the `beforeDevCommand` if used, must be configured in `.vscode/tasks.json`
-			"preLaunchTask": "ui:dev"
+			"preLaunchTask": "npm: dev:all"
 		},
 		{
 			"type": "lldb",
@@ -65,7 +80,7 @@
 				]
 			},
 			// task for the `beforeBuildCommand` if used, must be configured in `.vscode/tasks.json`
-			"preLaunchTask": "ui:build"
+			"preLaunchTask": "npm: build"
 		}
 	]
 }
