@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "com.todo-note-app.app",
   "build": {
-    "beforeDevCommand": "pnpm dev:client",
+    "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "pnpm build:frontend",
     "frontendDist": "../dist/frontend"

@@ -6,6 +6,7 @@ import { TodoId } from '../types/gerneral';
 import { AffectNumber } from '../types/db';
 import { testTodo } from '../constants/test';
 import { todoTransToTodo } from '../utils/todo';
+import { invoke } from '../tauri';
 
 // TODO操作API
 export const todoOps = {
@@ -106,6 +107,15 @@ export const todoOps = {
     // const errorData = await response.json().catch(() => ({ message: '网络错误' }));
     return { success: false, message: message ?? '切换TODO状态失败' };
   },
+  export: async (): Promise<ApiResponse<string>> => {
+    const res = todoOps.getTodos().then(res => {
+      if (res.success) {
+        const todos: Todo[] = res.data;
+        return invoke('export_todo', { todo: JSON.stringify(todos), path: 'todo.json' });
+      }
+    })
+    console.log(res)
+  }
 
   // /**
   //  * 获取已完成的TODO

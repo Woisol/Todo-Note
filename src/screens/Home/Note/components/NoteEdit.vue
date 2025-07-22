@@ -35,7 +35,7 @@ onUnmounted(() => {
 </script>
 <template>
   <NoteMeta v-if="note" v-model="noteMetaProxy" class="px-2 pb-4" />
-  <div v-else class="flex items-center justify-center h-full flex-1">
+  <div v-else class="flex place-items-center h-full flex-1">
     <p class="text-gray-500">请选择一个笔记查看内容</p>
   </div>
   <div ref="vditorElement"
