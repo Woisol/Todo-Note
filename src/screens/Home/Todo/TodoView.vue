@@ -188,7 +188,7 @@ todoOps.getTodos().then(res => {
   if (res.success) {
     let todoOrder = localStorage.getItem('todo-order');
     if (todoOrder && todoOrder.split(',').filter(o => o).length !== res.data.length) {
-      localStorage.setItem('todo-orde', '')
+      localStorage.setItem('todo-order', '')
       todoOrder = null
     }
     todos.value = todoOrder ? todoOrder.split(',').filter(t => t).map(id => res.data!.find(t => t.info.id === id)!) ?? [] : res.data!;

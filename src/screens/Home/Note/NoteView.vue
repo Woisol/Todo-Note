@@ -44,7 +44,16 @@ const actions: PageHeaderAction[] = [
     icon: 'pi pi-upload',
     onClick: () => {
       // @todo to implement
-      toast.info('Export not implemented yet')
+      // toast.info('Export not implemented yet')
+      noteOps.exportNote(note.value!, noteTitle.value).then((res) => {
+        if (res.success) {
+          toast.success('导出成功，文件保存在应用根目录下');
+        } else {
+          toast.error(res.message ?? '未知错误');
+        }
+      }).catch((error) => {
+        console.error('Failed to export note:', error);
+      });
     }
   },
 

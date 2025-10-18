@@ -5,6 +5,7 @@ import { ApiResponse } from '../types/request';
 import { NoteId } from '../types/gerneral';
 import { testNote, testTreeData } from '../constants/test';
 import { noteTransToNote } from '../utils/note';
+import { invoke } from '../tauri';
 
 // let _testNoteTreeData = testTreeData;
 // @todo 极其多重复代码，考虑包装
@@ -136,5 +137,13 @@ export const noteOps = {
 
     return { success: false, message: message ?? '删除笔记失败' };
 
+  },
+
+  /**
+   * 导出
+   */
+  exportNote: async (note: Note, title: string): Promise<ApiResponse> => {
+    const res = invoke('export_note', { note_str: JSON.stringify(note), path: './' + title + '.md' }) as boolean;
+    return { success: res } as ApiResponse;
   }
 };

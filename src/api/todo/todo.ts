@@ -111,7 +111,7 @@ export const todoOps = {
     const res = await todoOps.getTodos().then(res => {
       if (res.success) {
         const todos: Todo[] = res.data;
-        return invoke('export_todo', { todoStr: JSON.stringify(todos), path: 'todo.json' });
+        return invoke('export_todo', { todoStr: JSON.stringify(todos) });
       }
     }).catch(err => err)
     console.log(res)
