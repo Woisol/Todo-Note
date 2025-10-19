@@ -115,12 +115,11 @@ export const todoOps = {
       }
     }).catch(err => err)
     console.log(res)
-    if (res) {
+    if (typeof res === "boolean")
       return { success: true, message: '导出TODO成功' }; // 这里可以根据实际情况返回更多信息
-    }
-    else {
+    else
       return { success: false, message: '导出TODO失败:' + res };
-    }
+
   }
 
   // /**

@@ -27,3 +27,10 @@ out/*
 *.njsproj
 *.sln
 *.sw?
+
+
+# Added by cargo
+
+/target
+
+CONOUT$

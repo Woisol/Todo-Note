@@ -142,8 +142,13 @@ export const noteOps = {
   /**
    * 导出
    */
-  exportNote: async (note: Note, title: string): Promise<ApiResponse> => {
-    const res = invoke('export_note', { note_str: JSON.stringify(note), path: './' + title + '.md' }) as boolean;
-    return { success: res } as ApiResponse;
+  exportNote: async (note: Note, title: string): Promise<ApiResponse<boolean | string>> => {
+    // 编译了还是用的 noteStr 而非 note_str……
+    const res = await invoke('export_note', { noteStr: JSON.stringify(note), path: './' + title + '.md' }) as boolean;
+    if (typeof res == "boolean")
+      return { success: res.valueOf(), message: '导出成功' } as ApiResponse<boolean | string>;
+    else if (typeof res == "string")
+      return { success: false, message: res } as ApiResponse<boolean | string>;
+    return { success: false, message: "未知错误" } as ApiResponse<boolean | string>;
   }
 };

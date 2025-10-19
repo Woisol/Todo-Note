@@ -23,23 +23,23 @@ fn _export_str(str: &str, path: &path::Path) -> Result<String, String> {
 }
 // 结果是因为漏了这个导致 main.rs 中 export::export_todo 编译错误
 #[tauri::command]
-pub fn export_todo(todo_str: &str) -> bool {
+pub fn export_todo(todo_str: &str) -> Result<bool, String> {
     // todo!("Implement export functionality");
     // This function can be used to export todo items
     // For now, we will just return a placeholder string
     match _export_str(&todo_str, path::Path::new("./todo.json")){
-        Ok(msg) => true,
-        Err(err) => false,
+        Ok(_msg) => Ok(true),
+        Err(err) => Err(err),
     }
 }
 
 #[tauri::command]
-pub fn export_note(note_str: &str, path: &str) -> bool {
+pub fn export_note(note_str: &str, path: &str) -> Result<bool, String> {
     // todo!("Implement export functionality");
     // This function can be used to export todo items
     // For now, we will just return a placeholder string
     match _export_str(&note_str, path::Path::new(path)){
-        Ok(msg) => true,
-        Err(err) => false,
+        Ok(_msg) => Ok(true),
+        Err(err) => Err(err),
     }
 }
