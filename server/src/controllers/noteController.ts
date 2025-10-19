@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { Note, NoteMeta, NoteTreeNode } from '../types/note';
 import { NoteService } from '../services/noteService';
 import { UserId } from '@server/types/gerneral';
+import { CollaborateService } from '../services/collaborateService';
 
 interface AuthenticatedRequest<T = any> extends Request<T> {
   user?: { id: string };
@@ -10,9 +11,11 @@ interface AuthenticatedRequest<T = any> extends Request<T> {
 
 export class NoteController {
   private noteService: NoteService;
+  private collaborateService: CollaborateService;
 
-  constructor() {
+  constructor(collaborateService: CollaborateService) {
     this.noteService = new NoteService();
+    this.collaborateService = collaborateService;
   }
 
   /**
@@ -271,6 +274,68 @@ export class NoteController {
       });
     } catch (error) {
       console.error('Error getting recent notes:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  /**
+   * 获取协作服务状态
+   * GET /collaborate/status
+   */
+  public getCollaborateStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, message: '未授权访问' });
+        return;
+      }
+
+      const roomCount = this.collaborateService.getRoomCount();
+      res.status(200).json({
+        success: true,
+        data: {
+          status: 'active',
+          roomCount,
+          message: 'WebSocket 协作服务运行中'
+        }
+      });
+    } catch (error) {
+      console.error('Error getting collaborate status:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  /**
+   * 获取特定笔记的协作房间信息
+   * GET /collaborate/room/:noteId
+   */
+  public getRoomInfo = async (req: AuthenticatedRequest<{ noteId: string }>, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, message: '未授权访问' });
+        return;
+      }
+
+      const { noteId } = req.params;
+      const clientCount = this.collaborateService.getRoomClientCount(noteId);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          noteId,
+          clientCount,
+          message: `房间 ${noteId} 当前有 ${clientCount} 个客户端在线`
+        }
+      });
+    } catch (error) {
+      console.error('Error getting room info:', error);
       res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error',

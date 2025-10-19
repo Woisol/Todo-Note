@@ -33,7 +33,9 @@
     "ts-node": "^10.9.2",
     "vditor": "^3.11.1",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.27"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
