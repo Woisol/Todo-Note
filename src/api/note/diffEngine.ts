@@ -494,6 +494,13 @@ export class NoteDiffEngine {
   }
 
   /**
+   * 获取 Vditor 实例
+   */
+  getVditor(): Vditor | undefined {
+    return this.vditor;
+  }
+
+  /**
    * 设置编辑器内容
    */
   setContent(content: string): void {

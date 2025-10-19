@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
 import NoteTree from './components/NoteTree.vue';
 import PageHeader, { PageHeaderAction } from '@/components/PageHeader.vue';
 import { noteDiffEngine } from '@/api/note/diffEngine';
@@ -12,13 +12,30 @@ import { noteTreeTool } from '@/api/utils/noteTree';
 import { TreeNode } from 'primevue/treenode';
 import NoteEdit from './components/NoteEdit.vue';
 import { NoteId } from '@/api/types/gerneral';
+import { collaborateService } from '@/api/note/collaborate';
 
 const { _id } = defineProps<{ _id?: string }>()
 const visible = defineModel<boolean>({
   default: true,
   type: Boolean
 });
-const actions: PageHeaderAction[] = [
+
+// 协作状态
+const isCollaborating = ref(false);
+const collaborationStatus = computed(() => collaborateService.connectionStatus.value);
+
+const actions = computed<PageHeaderAction[]>(() => [
+  {
+    label: isCollaborating.value ? '断开协作' : '开启协作',
+    icon: isCollaborating.value ? 'pi pi-sign-out' : 'pi pi-users',
+    onClick: () => {
+      if (!noteId.value) {
+        toast.error('请先选择一个笔记')
+        return
+      }
+      toggleCollaboration()
+    }
+  },
   {
     label: '刷新',
     icon: 'pi pi-refresh',
@@ -57,7 +74,7 @@ const actions: PageHeaderAction[] = [
     }
   },
 
-]
+]);
 const toast = useToastHelper();
 const confirm = useConfirm();
 
@@ -107,6 +124,44 @@ function updateNoteTree() {
   })
 }
 updateNoteTree();
+
+// 协作功能
+function toggleCollaboration() {
+  if (!noteId.value) {
+    toast.error('请先选择一个笔记');
+    return;
+  }
+
+  if (isCollaborating.value) {
+    // 断开协作
+    collaborateService.disconnect();
+    isCollaborating.value = false;
+    toast.info('已断开协作连接');
+  } else {
+    // 开启协作
+    try {
+      const doc = collaborateService.connect(noteId.value);
+      isCollaborating.value = true;
+      toast.success('协作连接已建立');
+
+      // 如果有当前笔记内容，初始化到协作文档
+      if (note.value?.content) {
+        collaborateService.setSharedText(note.value.content);
+      }
+    } catch (error) {
+      console.error('开启协作失败:', error);
+      toast.error('开启协作失败');
+      isCollaborating.value = false;
+    }
+  }
+}
+
+// 组件卸载时断开协作
+onUnmounted(() => {
+  if (isCollaborating.value) {
+    collaborateService.disconnect();
+  }
+});
 
 watch(
   () => noteId.value,
@@ -444,7 +499,15 @@ function handlePageHeaderUpdateTitle() {
       <PageHeader v-model:visible="visible" v-model:note_title="noteTitle" title="Note" :actions="actions"
         @update-title="handlePageHeaderUpdateTitle" />
       <!-- <RouterView/> -->
-      <NoteEdit :note="note" v-model="noteMetaProxy"></NoteEdit>
+      <NoteEdit :note="note" :is-collaborating="isCollaborating" v-model="noteMetaProxy"></NoteEdit>
+
+      <!-- 协作状态指示器 -->
+      <div v-if="isCollaborating"
+        class="absolute bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+        <i class="pi pi-users"></i>
+        <span>协作模式</span>
+        <span class="text-xs">({{ collaborationStatus }})</span>
+      </div>
     </div>
   </div>
 </template>
