@@ -28,8 +28,8 @@ export class VditorYjsBinding {
     // 2. 从 Vditor 同步到 Yjs
     this.observeVditorChanges();
 
-    // 3. 初始同步：如果 yText 有内容，同步到 Vditor
-    if (this.yText.length > 0 && !this.vditor.getValue()) {
+    // 3. 初始同步：如果 yText 有内容， 强行 同步到 Vditor
+    if (this.yText.length > 0) {//&& !this.vditor.getValue()
       this.syncYjsToVditor();
     }
     // 4. 如果 Vditor 有内容而 yText 没有，同步到 Yjs
@@ -112,12 +112,26 @@ export class VditorYjsBinding {
       const currentValue = value ?? this.vditor.getValue();
       const yTextValue = this.yText.toString();
 
+      console.log('📤 Vditor → Yjs 同步:', {
+        vditorValue: currentValue.substring(0, 50),
+        vditorLength: currentValue.length,
+        yTextValue: yTextValue.substring(0, 50),
+        yTextLength: yTextValue.length,
+        yTextDoc: this.yText.doc ? 'exists' : 'null',
+        docKeys: this.yText.doc ? Array.from(this.yText.doc.share.keys()) : []
+      });
+
       if (currentValue !== yTextValue) {
+        console.log('📝 内容不同，开始更新 Y.Text');
         // 使用事务来批量更新
         this.yText.doc?.transact(() => {
           this.yText.delete(0, this.yText.length);
           this.yText.insert(0, currentValue);
+          console.log('✅ Y.Text 更新完成, 新长度:', this.yText.length);
+          console.log('✅ Y.Text 内容:', this.yText.toString().substring(0, 50));
         });
+      } else {
+        console.log('⏭️ 内容相同，跳过更新');
       }
     } catch (error) {
       console.error('同步 Vditor 到 Yjs 失败:', error);

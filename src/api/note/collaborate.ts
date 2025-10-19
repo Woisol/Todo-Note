@@ -1,5 +1,6 @@
 import * as Y from 'yjs';
 import { Ref, ref } from 'vue';
+import { WebsocketProvider } from 'y-websocket'
 
 /**
  * Yjs 协作服务类
@@ -49,10 +50,13 @@ export class CollaborateService {
     this.noteId = noteId;
     this.connectionStatus.value = 'connecting';
 
-    // 创建 Y.Doc
-    if (!this.doc) {
-      this.doc = new Y.Doc();
+    // ⚠️ 关键修复：每次连接都创建全新的 Y.Doc
+    // 这样可以避免与服务端的状态不同步
+    if (this.doc) {
+      this.doc.destroy();
     }
+    this.doc = new Y.Doc();
+    console.log('📄 创建新的 Y.Doc, Client ID:', this.doc.clientID);
 
     // 构建 WebSocket URL
     const url = new URL(this.serverUrl);
@@ -66,6 +70,7 @@ export class CollaborateService {
 
       this.ws.onopen = () => {
         console.log(`✅ 协作连接已建立: ${noteId}`);
+        console.log(`📄 客户端 Y.Doc Client ID: ${this.doc!.clientID}`);
         this.connectionStatus.value = 'connected';
         this.reconnectAttempts = 0;
         this.isConnecting = false;
@@ -74,6 +79,7 @@ export class CollaborateService {
       this.ws.onmessage = (event) => {
         this.handleMessage(event.data);
       };
+      // this.ws
 
       this.ws.onerror = (error) => {
         console.error('❌ WebSocket 错误:', error);
@@ -94,8 +100,17 @@ export class CollaborateService {
 
       // 监听文档更新，发送到服务器
       this.doc.on('update', (update: Uint8Array, origin: any) => {
+        console.log('📡 Y.Doc 更新事件:', {
+          origin,
+          updateSize: update.length,
+          wsReady: this.ws?.readyState === WebSocket.OPEN,
+          docKeys: Array.from(this.doc!.share.keys()),
+          contentText: this.doc!.getText('content').toString()
+        });
+
         // 如果更新不是来自远程（即本地产生的更新），则发送到服务器
         if (origin !== 'remote' && this.ws?.readyState === WebSocket.OPEN) {
+          console.log('📤 发送更新到服务器, 大小:', update.length);
           this.ws.send(update);
         }
       });
@@ -119,6 +134,7 @@ export class CollaborateService {
         data.arrayBuffer().then((buffer: ArrayBuffer) => {
           const update = new Uint8Array(buffer);
           Y.applyUpdate(this.doc!, update, 'remote');
+          // this.doc.
         });
       } else if (data instanceof ArrayBuffer) {
         const update = new Uint8Array(data);
@@ -189,7 +205,8 @@ export class CollaborateService {
    */
   public getSharedType<T = Y.Text>(name: string = 'content'): T | null {
     if (!this.doc) return null;
-    return this.doc.get(name) as T;
+    // 使用 getText 确保获取的是同一个 Y.Text 实例
+    return this.doc.getText(name) as T;
   }
 
   /**
@@ -221,23 +238,23 @@ export class CollaborateService {
    * @param callback 回调函数
    * @param name 共享类型的名称
    */
-  public onSharedTextChange(callback: (text: string) => void, name: string = 'content'): () => void {
-    if (!this.doc) {
-      return () => {};
-    }
+  // public onSharedTextChange(callback: (text: string) => void, name: string = 'content'): () => void {
+  //   if (!this.doc) {
+  //     return () => {};
+  //   }
 
-    const yText = this.doc.getText(name);
-    const observer = () => {
-      callback(yText.toString());
-    };
+  //   const yText = this.doc.getText(name);
+  //   const observer = () => {
+  //     callback(yText.toString());
+  //   };
 
-    yText.observe(observer);
+  //   yText.observe(observer);
 
-    // 返回取消监听的函数
-    return () => {
-      yText.unobserve(observer);
-    };
-  }
+  //   // 返回取消监听的函数
+  //   return () => {
+  //     yText.unobserve(observer);
+  //   };
+  // }
 }
 
 // 创建单例实例

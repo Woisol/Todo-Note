@@ -47,7 +47,9 @@ export class CollaborateService {
         clients: new Set()
       };
       this.rooms.set(roomId, room);
-      console.log(`📝 创建新的协作房间: ${roomId}`);
+      console.log(`📝 创建新的协作房间: ${roomId}, Y.Doc Client ID: ${room.doc.clientID}`);
+    } else {
+      console.log(`📂 使用现有房间: ${roomId}, Y.Doc Client ID: ${room.doc.clientID}`);
     }
 
     // 添加客户端到房间
@@ -56,20 +58,53 @@ export class CollaborateService {
 
     // 发送当前文档状态给新客户端
     const state = Y.encodeStateAsUpdate(room.doc);
+    console.log(`📤 发送初始状态给新客户端，大小: ${state.length} 字节`);
+    console.log(`📄 当前房间文档内容: "${room.doc.getText('content').toString()}"`);
     ws.send(state);
 
     // 监听客户端消息
     ws.on('message', (message: Buffer) => {
+      //! 问题定位：服务器发送的解析后永远是空
       try {
+        console.log(`📩 收到客户端消息，大小: ${message.length} 字节`);
+        console.log(`📦 消息内容 (前100字节):`, message.slice(0, 100));
+
+        // 解析 update 的 client ID
+        const update = new Uint8Array(message);
+        console.log(`🔍 Update 数组:`, update);
+
+        // 应用更新前记录文档状态
+        const beforeContent = room!.doc.getText('content').toString();
+        const beforeKeys = Array.from(room!.doc.share.keys());
+        console.log(`📄 服务端 Y.Doc Client ID: ${room!.doc.clientID}`);
+        console.log(`旧文档内容: "${beforeContent}"`);
+        console.log(`旧文档键名:`, beforeKeys);
+
         // 应用更新到文档
-        Y.applyUpdate(room!.doc, new Uint8Array(message));
+        Y.applyUpdate(room!.doc, update);
+
+        // 应用更新后记录文档状态
+        const afterContent = room!.doc.getText('content').toString();
+        const afterKeys = Array.from(room!.doc.share.keys());
+        console.log(`当前文档内容: "${afterContent}"`);
+        console.log(`当前文档键名:`, afterKeys);
+        console.log(`内容是否改变: ${beforeContent !== afterContent}`);
+
+        // 打印所有共享类型的内容
+        room!.doc.share.forEach((value, key) => {
+          console.log(`📋 共享类型 "${key}":`, value.toString());
+        });
 
         // 广播更新给房间内其他客户端
+        let broadcastCount = 0;
         room!.clients.forEach(client => {
           if (client !== ws && client.readyState === 1) { // 1 = OPEN
+            console.log(`📤 广播给客户端`);
             client.send(message);
+            broadcastCount++;
           }
         });
+        console.log(`✅ 已广播给 ${broadcastCount} 个客户端`);
       } catch (error) {
         console.error('❌ 处理协作消息错误:', error);
       }

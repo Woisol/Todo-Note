@@ -53,17 +53,48 @@ watch(() => isCollaborating, (newValue) => {
 
 // 设置协作绑定
 function setupCollaborationBinding() {
-  if (!isCollaborating || !noteDiffEngine.isInitialized) {
+  console.log('🔧 尝试设置协作绑定');
+
+  if (!noteDiffEngine.isInitialized) {
+    console.log('⏭️ 跳过绑定设置 (编辑器未初始化)');
     return;
   }
 
   try {
     const vditor = noteDiffEngine.getVditor();
+    const doc = collaborateService.getDoc();
     const yText = collaborateService.getSharedType<import('yjs').Text>();
 
+    console.log('📋 获取组件:', {
+      hasVditor: !!vditor,
+      hasDoc: !!doc,
+      hasYText: !!yText,
+      yTextLength: yText?.length,
+      docKeys: doc ? Array.from(doc.share.keys()) : [],
+      yTextContent: yText?.toString()
+    });
+
     if (vditor && yText) {
+      // 验证 yText 是否属于 doc
+      if (yText.doc !== doc) {
+        console.error('❌ Y.Text 的文档和协作服务的文档不一致!');
+        console.log('yText.doc:', yText.doc);
+        console.log('collaborateService.doc:', doc);
+      }
+
       yjsBinding = new VditorYjsBinding(vditor, yText);
       console.log('✅ Vditor 协作绑定已建立');
+
+      // 验证绑定后的状态
+      setTimeout(() => {
+        console.log('🔍 绑定后验证:', {
+          docKeys: Array.from(doc!.share.keys()),
+          contentLength: doc!.getText('content').length,
+          contentText: doc!.getText('content').toString()
+        });
+      }, 1000);
+    } else {
+      console.warn('⚠️ 无法建立绑定: vditor 或 yText 不存在');
     }
   } catch (error) {
     console.error('设置协作绑定失败:', error);

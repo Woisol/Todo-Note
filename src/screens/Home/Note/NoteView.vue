@@ -21,7 +21,7 @@ const visible = defineModel<boolean>({
 });
 
 // 协作状态
-const isCollaborating = ref(false);
+const isCollaborating = ref(true); // 默认开启协作
 const collaborationStatus = computed(() => collaborateService.connectionStatus.value);
 
 const actions = computed<PageHeaderAction[]>(() => [
