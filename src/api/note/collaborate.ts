@@ -66,9 +66,16 @@ export class CollaborateService {
 
       this.ws.onopen = () => {
         console.log(`✅ 协作连接已建立: ${noteId}`);
+        console.log(`📄 客户端 Y.Doc Client ID: ${this.doc!.clientID}`);
         this.connectionStatus.value = 'connected';
         this.reconnectAttempts = 0;
         this.isConnecting = false;
+
+        // ✅ 连接建立后，立即发送客户端的完整状态
+        // 如果是第一个客户端，这会初始化服务端；否则服务端会发回正确的状态覆盖
+        const state = Y.encodeStateAsUpdate(this.doc!);
+        console.log(`📤 发送客户端完整状态到服务器，大小: ${state.length} 字节`);
+        this.ws!.send(state);
       };
 
       this.ws.onmessage = (event) => {
@@ -94,10 +101,18 @@ export class CollaborateService {
 
       // 监听文档更新，发送到服务器
       this.doc.on('update', (update: Uint8Array, origin: any) => {
+        console.log(`📡 Y.Doc update 事件:`, {
+          origin,
+          updateSize: update.length,
+          wsReady: this.ws?.readyState === WebSocket.OPEN
+        });
+
         // 如果更新不是来自远程（即本地产生的更新），则发送到服务器
         if (origin !== 'remote' && this.ws?.readyState === WebSocket.OPEN) {
-          console.log('Client sending update:', update);
+          console.log(`📤 发送本地更新到服务器，大小: ${update.length} 字节`);
           this.ws.send(update);
+        } else if (origin === 'remote') {
+          console.log(`⏭️ 远程更新，不回传服务器`);
         }
       });
 
