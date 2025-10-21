@@ -96,9 +96,15 @@ export class CollaborateService {
       this.doc.on('update', (update: Uint8Array, origin: any) => {
         // 如果更新不是来自远程（即本地产生的更新），则发送到服务器
         if (origin !== 'remote' && this.ws?.readyState === WebSocket.OPEN) {
+          console.log('Client sending update:', update);
           this.ws.send(update);
         }
       });
+
+      /**
+       * 当前传输情况：
+       * 确实发送、服务端接收、客户端接收都是相同的数据了……但是本地仍然无法更新()
+       */
 
     } catch (error) {
       console.error('连接协作服务器失败:', error);
@@ -118,11 +124,17 @@ export class CollaborateService {
         // 如果是 Blob，转换为 ArrayBuffer
         data.arrayBuffer().then((buffer: ArrayBuffer) => {
           const update = new Uint8Array(buffer);
+          console.log('📩 Client received update:', update);
+          console.log('📄 应用前 content:', this.doc!.getText('content').toString());
           Y.applyUpdate(this.doc!, update, 'remote');
+          console.log('📄 应用后 content:', this.doc!.getText('content').toString());
         });
       } else if (data instanceof ArrayBuffer) {
         const update = new Uint8Array(data);
+        console.log('📩 Client received update:', update);
+        console.log('📄 应用前 content:', this.doc!.getText('content').toString());
         Y.applyUpdate(this.doc!, update, 'remote');
+        console.log('📄 应用后 content:', this.doc!.getText('content').toString());
       } else {
         console.warn('收到未知类型的消息:', typeof data);
       }
@@ -189,7 +201,8 @@ export class CollaborateService {
    */
   public getSharedType<T = Y.Text>(name: string = 'content'): T | null {
     if (!this.doc) return null;
-    return this.doc.get(name) as T;
+    // ✅ 修复：使用 getText 确保获取的是同一个实例
+    return this.doc.getText(name) as T;
   }
 
   /**

@@ -29,7 +29,8 @@ export class VditorYjsBinding {
     this.observeVditorChanges();
 
     // 3. 初始同步：如果 yText 有内容，同步到 Vditor
-    if (this.yText.length > 0 && !this.vditor.getValue()) {
+    //! 初始内容就包含 \n 需要 trim()
+    if (this.yText.length > 0 && !this.vditor.getValue().trim()) {
       this.syncYjsToVditor();
     }
     // 4. 如果 Vditor 有内容而 yText 没有，同步到 Yjs
@@ -42,8 +43,24 @@ export class VditorYjsBinding {
    * 监听 Yjs 文档变化，同步到 Vditor
    */
   private observeYjsChanges(): void {
+    console.log('🔗 设置 Y.Text observe 监听器');
+    console.log('📋 Y.Text 信息:', {
+      length: this.yText.length,
+      content: this.yText.toString(),
+      doc: this.yText.doc ? 'exists' : 'null',
+      docClientID: this.yText.doc?.clientID
+    });
+
     const observer = (event: Y.YTextEvent) => {
+      console.log('🔔 *** Y.Text observe 事件触发! ***', {
+        isLocalChange: this.isLocalChange,
+        isSyncing: this.isSyncing,
+        delta: event.delta,
+        target: event.target.toString().substring(0, 50)
+      });
+
       if (this.isLocalChange || this.isSyncing) {
+        console.log('⏭️ 跳过同步');
         return;
       }
 
@@ -53,7 +70,13 @@ export class VditorYjsBinding {
         const currentValue = this.vditor.getValue();
         const newValue = this.yText.toString();
 
+        console.log('🔄 准备同步到 Vditor:', {
+          currentLength: currentValue.length,
+          newLength: newValue.length
+        });
+
         if (currentValue !== newValue) {
+          console.log('📝 更新 Vditor 内容');
           // 保存当前光标位置
           const cursorPos = this.getCursorPosition();
 
@@ -64,6 +87,8 @@ export class VditorYjsBinding {
           if (cursorPos !== null) {
             this.setCursorPosition(cursorPos);
           }
+
+          console.log('✅ Vditor 内容已更新');
         }
       } catch (error) {
         console.error('同步 Yjs 到 Vditor 失败:', error);
@@ -73,6 +98,7 @@ export class VditorYjsBinding {
     };
 
     this.yText.observe(observer);
+    console.log('✅ Y.Text observe 监听器已设置');
 
     // 保存 unobserve 函数
     this.unobserve = () => {
@@ -114,10 +140,13 @@ export class VditorYjsBinding {
 
       if (currentValue !== yTextValue) {
         // 使用事务来批量更新
+        const _dbg_origin = this.yText.toString();
         this.yText.doc?.transact(() => {
           this.yText.delete(0, this.yText.length);
           this.yText.insert(0, currentValue);
+          // this.yText.
         });
+        console.log('✅ Yjs 文档已更新 from:', _dbg_origin, 'to:', this.yText.toString());
       }
     } catch (error) {
       console.error('同步 Vditor 到 Yjs 失败:', error);

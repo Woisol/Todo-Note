@@ -1,5 +1,6 @@
 import { WebSocketServer } from 'ws';
 import * as Y from 'yjs';
+// import { } from 'y-websocket'
 import { Server as HTTPServer } from 'http';
 
 interface CollaborationRoom {
@@ -24,6 +25,8 @@ export class CollaborateService {
 
     this.wss.on('connection', (ws, req) => {
       console.log('📡 新的协作连接建立');
+
+      //! 官方 demo 示例 require('y-websocket/bin/utils').setupWSConnection 就行……
 
       // 从 URL 参数中获取房间 ID（笔记 ID）
       const url = new URL(req.url || '', `http://${req.headers.host}`);
@@ -55,18 +58,26 @@ export class CollaborateService {
     console.log(`👤 客户端加入房间 ${roomId}，当前客户端数: ${room.clients.size}`);
 
     // 发送当前文档状态给新客户端
+    //~~ 这个又可以更新😡，并非，进入协作后的更新来自于本地数据……
+    console.dir('Original doc: ', room.doc.get('content'));
     const state = Y.encodeStateAsUpdate(room.doc);
+    //! 行吧有可能是这里，客户端已经使用本地数据更新出内容了，这里依然发送空内容，可能是导致后续无法更新的原因……
     ws.send(state);
 
     // 监听客户端消息
-    ws.on('message', (message: Buffer) => {
+    ws.on('message', (message: any) => {
       try {
         // 应用更新到文档
+        console.log('Server received update:', new Uint8Array(message));
+        const _dbg_origin = room!.doc.get('content');
         Y.applyUpdate(room!.doc, new Uint8Array(message));
+        console.dir(room!.doc);
+        //! 根本没有变化……
+        console.log('✅ 应用更新 from:', _dbg_origin, 'to:', room!.doc.get('content'));
 
         // 广播更新给房间内其他客户端
         room!.clients.forEach(client => {
-          if (client !== ws && client.readyState === 1) { // 1 = OPEN
+          if (client !== ws && client.readyState === WebSocket.OPEN) { // 1 = OPEN
             client.send(message);
           }
         });
